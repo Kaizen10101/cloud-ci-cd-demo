@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: CI/CD Pipeline
 
 on:
   push:
@@ -15,16 +15,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
-    runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Demonstrate GitHub Secret
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+        run: |
+          echo "Secret successfully loaded."
+          echo "Deployment will continue."
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -37,9 +55,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Use GitHub Secret
-        env:
-          API_KEY: ${{ secrets.API_KEY }}
-        run: |
-          echo "Secret is stored securely."
